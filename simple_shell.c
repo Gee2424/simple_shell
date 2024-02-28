@@ -8,7 +8,7 @@
 
 /**
 * execute_command - For command Execution.
-* @buffer: A buffer for the commad.
+* @buffer: A buffer for the command.
 * Return: Returns nothing Nothing.
 */
 void execute_command(char *buffer)
