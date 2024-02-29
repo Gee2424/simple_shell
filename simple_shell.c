@@ -1,88 +1,77 @@
-#include "shell.h"
-
-#define MAX_CMD_LEN 1024
-#define MAX_PATH_LEN 1024
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 extern char **environ;
 
 /**
-* execute_command - Executes a command.
-* @cmd: The command to execute.
-*
-* This function forks a new process and executes the given command.
-* If the command is not an absolute path, it prepends "/bin/" to it.
-* If the command cannot be executed, it prints an error message.
+* execute_command - Tries to execute a given command
+* @cmd: The command to execute
 */
 void execute_command(char *cmd) {
 pid_t pid;
 int status;
-char *argv[2];
-char path[MAX_PATH_LEN];
+char *argv[3]; 
 
-if (cmd[0] != '/') {
-snprintf(path, MAX_PATH_LEN, "/bin/%s", cmd);
-cmd = path;
-}
+argv[0] = cmd;
+argv[1] = NULL; 
 
 pid = fork();
 if (pid == -1) {
-perror("fork");
-} else if (pid == 0) {
-argv[0] = cmd;
-argv[1] = NULL;
+perror("Error: fork failed");
+return;
+}
+if (pid == 0) {
+/* Child process*/
 if (execve(cmd, argv, environ) == -1) {
-perror(cmd);
+fprintf(stderr, "./shell: %s: No such file or directory\n", cmd);
 exit(EXIT_FAILURE);
 }
 } else {
-do {
-waitpid(pid, &status, WUNTRACED);
-} while (!WIFEXITED(status) && !WIFSIGNALED(status));
+/*Parent process*/
+waitpid(pid, &status, 0);
 }
 }
 
+
 /**
-* main - Entry point for the simple shell.
-*
-* This function displays a prompt, reads a command from the user,
-* and executes it. It handles the "end of file" condition (Ctrl+D)
-* by exiting gracefully.
-*
-* Return: Always returns 0.
+* main - Entry point for the simple shell
+* Return: Always 0 (Success)
 */
 int main(void) {
 char *line = NULL;
-size_t len = 0;
-ssize_t read;
+size_t bufsize = 0;
+ssize_t nread;
 
 while (1) {
 printf("#cisfun$ ");
 fflush(stdout);
 
-read = getline(&line, &len, stdin);
-if (read == -1) {
-if (feof(stdin)) {
+nread = getline(&line, &bufsize, stdin);
+if (nread == -1) {
+if (feof(stdin)) { 
 printf("\n");
+free(line);
 exit(EXIT_SUCCESS);
-} else {
-perror("readline");
-exit(EXIT_FAILURE);
+} else { 
+perror("getline");
+continue;
 }
 }
 
-line[strcspn(line, "\n")] = '\0';
+/* Remove the newline at the end*/
+line[strcspn(line, "\n")] = 0;
 
-if (strcmp(line, "exit") == 0) {
-printf("./shell: No such file or directory\n");
+if (strlen(line) == 0) { 
 continue;
 }
 
 execute_command(line);
 }
 
-free(line);
-return EXIT_SUCCESS;
+free(line); 
+return 0;
 }
-
-
