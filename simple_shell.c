@@ -1,15 +1,17 @@
 #include "shell.h"
 
 extern char **environ;
+
 /**
-* main - Entry point for the simple shell
+* execute_command - Executes a command.
+* @cmd: The command to execute.
 *
-* Return: Always returns 0.
+* Return: Nothing.
 */
 void execute_command(char *cmd) {
 pid_t pid;
 int status;
-char *argv[3]; 
+char *argv[2];
 
 pid = fork();
 if (pid == -1) {
@@ -28,6 +30,11 @@ waitpid(pid, &status, WUNTRACED);
 }
 }
 
+/**
+* main - Entry point for the simple shell.
+*
+* Return: Always returns 0.
+*/
 int main(void) {
 char *line = NULL;
 size_t len = 0;
@@ -45,12 +52,12 @@ exit(EXIT_FAILURE);
 }
 }
 
-/*Remove the newline character*/
+/* Remove the newline character at the end of the line */
 if (line[read - 1] == '\n') {
 line[read - 1] = '\0';
 }
 
-/*Directly execute the command*/
+/* Directly execute the command without parsing for arguments */
 execute_command(line);
 free(line);
 line = NULL;
