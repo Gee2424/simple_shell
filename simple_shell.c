@@ -45,12 +45,12 @@ exit(EXIT_FAILURE);
 }
 }
 
-/*Remove the newline character at the end of the line*/
+/*Remove the newline character*/
 if (line[read - 1] == '\n') {
 line[read - 1] = '\0';
 }
 
-/*Directly execute the command without parsing for arguments*/
+/*Directly execute the command*/
 execute_command(line);
 free(line);
 line = NULL;
