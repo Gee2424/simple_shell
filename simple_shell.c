@@ -1,93 +1,61 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/wait.h>
+#include "shell.h"
 
-#define BUFFER_SIZE 1024
-
+extern char **environ;
 /**
-* execute_command - Executes a command in a child process.
-* @buffer: The command to execute.
-* 
-* This function forks a new process and executes the command
-* provided in the buffer. If the command execution fails, it
-* prints an error message.
+* main - Entry point for the simple shell
+*
+* Return: Always returns 0.
 */
-void execute_command(char *buffer)
-{
-char *args[2]; /* Array to hold the command and the NULL terminator*/
-pid_t child_pid;
+void execute_command(char *cmd) {
+pid_t pid;
 int status;
+char *argv[3]; 
 
-args[0] = buffer; /*The command to execute*/
-args[1] = NULL; /*NULL terminator for the execve function*/
-
-child_pid = fork(); /*Fork a child process*/
-if (child_pid == -1)
-{
-    perror("Error");
-    exit(EXIT_FAILURE);
+pid = fork();
+if (pid == -1) {
+perror("fork");
+} else if (pid == 0) {
+argv[0] = cmd;
+argv[1] = NULL;
+if (execve(cmd, argv, environ) == -1) {
+perror(cmd);
+exit(EXIT_FAILURE);
 }
-if (child_pid == 0)
-{
-/*Child process attempts to execute the command*/
-if (execve(args[0], args, NULL) == -1)
-{
-perror("simple_shell");
+} else {
+do {
+waitpid(pid, &status, WUNTRACED);
+} while (!WIFEXITED(status) && !WIFSIGNALED(status));
+}
+}
+
+int main(void) {
+char *line = NULL;
+size_t len = 0;
+ssize_t read;
+
+while (1) {
+printf("$ ");
+read = getline(&line, &len, stdin);
+if (read == -1) {
+if (feof(stdin)) {
+exit(EXIT_SUCCESS);
+} else {
+perror("readline");
 exit(EXIT_FAILURE);
 }
 }
-else
-{
-/*Parent process waits for the child to complete*/
-wait(&status);
-}
-}
 
-/**
-* main - Entry point for the simple shell.
-* 
-* This function continuously displays a prompt, waits for user input,
-* and executes the entered command. It handles EOF (Ctrl+D) and ensures
-* that memory is properly managed by freeing allocated buffers.
-* 
-* Return: EXIT_SUCCESS on normal exit, EXIT_FAILURE on error.
-*/
-int main(void)
-{
-char *buffer = NULL;
-size_t bufsize = BUFFER_SIZE;
-ssize_t characters;
-
-while (1)
-{
-printf("#cisfun$ "); /*Display the prompt*/
-characters = getline(&buffer, &bufsize, stdin); /*Read input*/
-
-if (characters == -1)
-{
-if (feof(stdin)) /*Handle EOF*/
-{
-free(buffer);
-printf("\n"); /*Print a new line for a clean exit*/
-return (EXIT_SUCCESS);
-}
-else
-{
-perror("simple_shell");
-free(buffer);
-return (EXIT_FAILURE);
-}
+/*Remove the newline character at the end of the line*/
+if (line[read - 1] == '\n') {
+line[read - 1] = '\0';
 }
 
-buffer[characters - 1] = '\0'; /*Replace newline with null terminator*/
-
-execute_command(buffer); /*Execute the command*/
+/*Directly execute the command without parsing for arguments*/
+execute_command(line);
+free(line);
+line = NULL;
 }
 
-free(buffer); /* Free allocated memory (just in case)*/
-
-return (0);
+return EXIT_SUCCESS;
 }
 
