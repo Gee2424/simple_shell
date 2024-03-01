@@ -3,17 +3,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
-#include <sys/types.h>
+#include <string.h>
 #include <sys/wait.h>
-#include <errno.h>
+#include <sys/types.h>
 
-/* Function Prototypes */
-void execute_command(char *cmd);
-void type_prompt(void);
-char *read_command(void);
+void simple_shell(void);
 
 #endif /* SHELL_H */
-
 
