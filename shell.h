@@ -8,7 +8,13 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 
+#define ARG_MAX 64 
+
+extern char **environ;
+
 void simple_shell(void);
+void parse_input(char *line, char **argv);
 
 #endif /* SHELL_H */
+
 
