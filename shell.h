@@ -14,6 +14,7 @@ extern char **environ;
 
 void simple_shell(void);
 void parse_input(char *line, char **argv);
+char *search_path(char *cmd);
 
 #endif /* SHELL_H */
 
